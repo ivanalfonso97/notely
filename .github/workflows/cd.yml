@@ -6,18 +6,31 @@ on:
       [main]
 
 jobs:
-  deploy:
-    name: Deploy
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
+    - name: Check out code
+      uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.23.0"
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: "1.23.0"
 
-      - name: Build app
-        run: ./scripts/buildprod.sh
+    - name: Build app
+      run: ./scripts/buildprod.sh
+
+    - id: Auth
+      uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v3'
+
+    - name: 'Use gcloud CLI'
+      run: 'gcloud info'
+
+    - name: 'Build image and push to Artifact Registry'
+      run: gcloud builds submit --tag us-central1-docker.pkg.dev/notely-470106/notely-ar-repo/notely:latest
